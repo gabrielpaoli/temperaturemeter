@@ -1,0 +1,4 @@
+name = Temperature meter
+description = Create a page for temperature meter.
+core = 7.x
+package = Custom modules
