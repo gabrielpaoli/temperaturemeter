@@ -25,11 +25,6 @@
 	<div class="loader"><img src="<?= $theme_route; ?>/misc/loader.gif" /></div>
 
 	<div class="message"></div>
-	<div class="containerSensor">
-		<div class="sensor1 sensor"></div>
-		<div class="sensor2 sensor"></div>
-		<div class="sensor3 sensor"></div>
-		<div class="sensor4 sensor"></div>
-	</div>	
+	<div class="containerSensor"></div>	
 
 </div>
