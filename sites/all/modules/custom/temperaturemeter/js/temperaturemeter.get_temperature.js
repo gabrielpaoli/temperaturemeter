@@ -1,8 +1,9 @@
 function callDispositivosData(idEmpresa = null) {
+	var baseUrl = Drupal.settings.temperaturemeterHelpers.baseUrl;
 	jQuery.ajax({
-    url: 'http://temperaturemeter.com/temperaturemeter/get/dispositivosPerEmpresa',
+    url: baseUrl + '/temperaturemeter/get/dispositivosPerEmpresa',
     type: 'POST',
-		dataType: 'jsonp',
+		dataType: 'json',
     data: jQuery.param({idEmpresa : idEmpresa}) ,
     success: function (data) {
 
