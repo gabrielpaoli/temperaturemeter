@@ -55,7 +55,7 @@ function get_temperatura_per_dispositivo($idDispositivo, $idEmpresa){
 }
 
 function get_dispositivos($idEmpresa){
-  db_set_active('temperature');
+  db_set_active('temperatura');
   $query = db_select('dispositivos', 'd');
   $query->condition('d.empresa_id', $idEmpresa, '=');
   $query->fields('d');
@@ -86,7 +86,7 @@ function sensorColor($sensorTemperature){
 }
 
 function get_empresas(){
-  db_set_active('temperature');
+  db_set_active('temperatura');
 
   $query = db_select('empresas', 'e');
   $query->fields('e', array('nombre', 'empresa_id'));
