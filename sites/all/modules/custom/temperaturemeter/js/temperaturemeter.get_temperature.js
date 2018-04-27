@@ -2,6 +2,7 @@ function callDispositivosData(idEmpresa = null) {
 	jQuery.ajax({
     url: 'http://temperaturemeter.com/temperaturemeter/get/dispositivosPerEmpresa',
     type: 'POST',
+		dataType: 'jsonp',
     data: jQuery.param({idEmpresa : idEmpresa}) ,
     success: function (data) {
 
