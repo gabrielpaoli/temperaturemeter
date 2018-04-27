@@ -9,11 +9,6 @@ function temperaturemeter_menu() {
     ),
     'type' => MENU_CALLBACK,
   );
-  $items['temperaturemeter/get/temperature'] = array(
-    'page callback' => 'get_temperature_ajax',
-    'access arguments' => array('access content'),
-    'type' => MENU_CALLBACK,
-  );
   $items['temperaturemeter/get/dispositivosPerEmpresa'] = array(
     'page callback' => 'get_dispositivos_ajax',
     'access arguments' => array('access content'),
@@ -22,107 +17,27 @@ function temperaturemeter_menu() {
   return $items;
 }
 
-function get_temperature_ajax(){
-  $qty = null;
-  $idEmpresa = null;
-  
-  if(isset( $_POST["qty"])):
-    $qty = $_POST["qty"];
-  endif;
-  //var_dump($_POST["idEmpresa"]);
-  if(isset( $_POST["idEmpresa"])):
-    $idEmpresa = $_POST["idEmpresa"];
-  endif;
-  
-  $temperature = temperature_get_results($qty, $idEmpresa);
-  drupal_json_output($temperature);
-}
-
 function get_dispositivos_ajax(){
   if(isset( $_POST["idEmpresa"])):
     $idEmpresa = $_POST["idEmpresa"];
   endif;
   
-  $temperature = getDispositivosPerEmpresa($idEmpresa);
+  $temperature = get_dispositivos($idEmpresa);
   drupal_json_output($temperature);
 }
 
-function getDispositivosPerEmpresa($idEmpresa){
-  db_set_active('temperature');
-  $idEmpresa = 1;
-  $query = db_select('dispositivos', 'd');
-  $query->condition('d.empresa_id', $idEmpresa, '=');
-  $query->fields('d');
-  $query->leftJoin('temperaturas', 't', 't.id_dispositivo = d.dispositivo_id');
-  $query->fields('t');
-  //$query->orderBy('t.fecha', 'DESC');
-  //$query->addExpression('MAX(t.fecha)');
-
-
-
-
-$aa = db_query('SELECT *
-FROM dispositivos dd
-INNER JOIN
-    (SELECT *, MAX(fecha) AS MaxDateTime
-    FROM temperaturas
-    GROUP BY fecha) groupedtt 
-ON dd.dispositivo_id = groupedtt.id_dispositivo
-AND dd.empresa_id = 1
-GROUP BY dd.dispositivo_id');
-
-  $records = $aa->fetchAll();
-
-  foreach($records as $bb){
-    var_dump($bb);
-  }
-
-  $results = $query->execute();
-
-  foreach($results as $result){
-   
-    //var_dump($result); 
-    $dispositivos[$result->nombre][] = array(
-      'empresa_id' => $result->empresa_id,
-      'dispositivo_id' => $result->dispositivo_id,
-      'nombre' => $result->nombre, 
-      'sensor1' => $result->sensor1, 
-      'color1' => sensorColor($result->sensor1), 
-      'sensor2' => $result->sensor2, 
-      'color2' => sensorColor($result->sensor2), 
-      'sensor3' => $result->sensor3, 
-      'color3' => sensorColor($result->sensor3), 
-      'sensor4' => $result->sensor4, 
-      'color4' => sensorColor($result->sensor4), 
-      'fecha' => $result->fecha, 
-    );
-  }
-
-  db_set_active('default');
-  return $dispositivos;  
-}
-
-function temperature_get_results($qty = null, $idEmpresa = null){
-  db_set_active('temperature');
-
+function get_temperatura_per_dispositivo($idDispositivo, $idEmpresa){
   $query = db_select('temperaturas', 't');
+  $query->condition('t.id_dispositivo', $idDispositivo, '=');
+  $query->condition('t.id_empresa', $idEmpresa, '=');
+  $query->range(0,1);
+  $query->orderBy('t.fecha', 'DESC');
   $query->fields('t');
-  $query->orderBy('t.id', 'DESC');
-  $query->leftJoin('dispositivos', 'd', 'd.dispositivo_id = t.id_dispositivo');
-  $query->fields('d');
 
-  if($qty != null):
-    $query->range(0, $qty);
-  endif;
-
-  if($idEmpresa != null):
-    $query->condition('t.id_empresa', $idEmpresa, '=');
-  endif;
-  
   $results = $query->execute();
 
   foreach($results as $result){
-    $temperature[] = array(
+    $temperature = array(
       'id' => $result->id, 
       'fecha' => $result->fecha, 
       'sensor1' => $result->sensor1, 
@@ -134,14 +49,30 @@ function temperature_get_results($qty = null, $idEmpresa = null){
       'sensor4' => $result->sensor4, 
       'color4' => sensorColor($result->sensor4), 
       'id' => $result->id,
-      'nombre' => $result->nombre,
     );
   }
-
-  db_set_active('default');
   return $temperature;
 }
 
+function get_dispositivos($idEmpresa){
+  db_set_active('temperature');
+  $query = db_select('dispositivos', 'd');
+  $query->condition('d.empresa_id', $idEmpresa, '=');
+  $query->fields('d');
+
+  $results = $query->execute();
+
+  foreach($results as $result){
+    $temperatura = get_temperatura_per_dispositivo($result->dispositivo_id, $result->empresa_id);
+    $temperatura["nombre_dispositivo"] = $result->nombre; 
+    $dispositivos[] = array(
+      'temperatura' => $temperatura,
+    );
+  }
+  
+  db_set_active('default');
+  return $dispositivos;  
+}
 
 function sensorColor($sensorTemperature){
   if($sensorTemperature < 33){
@@ -153,7 +84,6 @@ function sensorColor($sensorTemperature){
   }
   return $color;
 }
-
 
 function get_empresas(){
   db_set_active('temperature');
@@ -167,8 +97,6 @@ function get_empresas(){
   db_set_active('default');
   return $result;
 }
-
-
 
 function temperaturemeter_preprocess_page(&$variables){
   if($variables["theme_hook_suggestions"][0] == 'page__temperaturemeter'):
